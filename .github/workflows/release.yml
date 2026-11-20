@@ -40,8 +40,8 @@ jobs:
         run: |
           cat <<EOF > $GITHUB_STEP_SUMMARY
           ## Action Parameters
-          - target_subproject: \`${{ github.event.inputs.target_subproject }}\`
-          - target_release_tag: \`${{ github.event.inputs.target_release_tag }}\`
+          - target_subproject: \`\${{ github.event.inputs.target_subproject }}\`
+          - target_release_tag: \`\${{ github.event.inputs.target_release_tag }}\`
           EOF
 
   matrix_prep:
@@ -63,7 +63,6 @@ jobs:
         run: |
           if [ $GITHUB_EVENT_NAME == 'release' ]
           then
-              # Leave an empty value here, so Kir-Antipov/mc-publish will infer the tag from the action context
               echo "tag_name=" >> $GITHUB_OUTPUT
           elif [ $GITHUB_EVENT_NAME == 'workflow_dispatch' ]
           then
@@ -87,7 +86,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ensure the input release tag is valid
   validate_release:
     runs-on: ubuntu-latest
     needs: changelog
@@ -112,20 +110,14 @@ jobs:
 
   release:
     continue-on-error: true
-
     needs:
       - matrix_prep
       - build
     runs-on: ubuntu-latest
-
-    # allow the mod publish step to add asserts to release
-    # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
     permissions:
       contents: write
-
     strategy:
       matrix: ${{ fromJson(needs.matrix_prep.outputs.matrix) }}
-
     steps:
       - uses: actions/checkout@v6
         with:
@@ -157,7 +149,6 @@ jobs:
         run: |
           if [ $GITHUB_EVENT_NAME == 'release' ]
           then
-              # Leave an empty value here, so Kir-Antipov/mc-publish will infer the tag from the action context
               echo "tag_name=" >> $GITHUB_OUTPUT
           elif [ $GITHUB_EVENT_NAME == 'workflow_dispatch' ]
           then
@@ -169,10 +160,19 @@ jobs:
 
       - name: Get repo info
         id: properties_repo
+        shell: bash
         run: |
-          MOD_VERSION=$(git describe --tags --abbrev=0 origin/mojmaps/preprocessor)
+          # The compatibility fork uses main rather than the upstream mojmaps/preprocessor branch.
+          # Derive the mod version from the selected release tag (e.g. v1.0.0-mc26.3 -> 1.0.0).
+          RELEASE_TAG="${{ github.event.inputs.target_release_tag || github.ref_name }}"
+          MOD_VERSION="${RELEASE_TAG#v}"
+          MOD_VERSION="${MOD_VERSION%-mc*}"
+          if [[ -z "$MOD_VERSION" || "$MOD_VERSION" == "$RELEASE_TAG" ]]; then
+              echo "Could not derive mod version from release tag: $RELEASE_TAG"
+              exit 1
+          fi
           echo "MOD_VERSION=$MOD_VERSION"
-          echo "mod_version=$(git describe --tags --abbrev=0 origin/mojmaps/preprocessor)" >> "$GITHUB_OUTPUT"
+          echo "mod_version=$MOD_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Read common properties
         id: properties_g
@@ -192,16 +192,14 @@ jobs:
         id: file_info
         run: |
           shopt -s extglob
-          FILE_PATHS=$(ls ${{ format('build-artifacts/{0}/build/libs/!(*-@(dev|sources|shadow)).jar', matrix.subproject) }})
+          FILE_PATHS=(build-artifacts/${{ matrix.subproject }}/build/libs/!(*-@(dev|sources|shadow)).jar)
           if (( ${#FILE_PATHS[@]} != 1 )); then
               echo "Error: Found ${#FILE_PATHS[@]} files, expected exactly 1"
               exit 1
-          else
-              FILE_PATH=${FILE_PATHS[0]}
           fi
-          
-          FILE_NAME=$(basename $FILE_PATH)
-          FILE_HASH=$(sha256sum $FILE_PATH | awk '{ print $1 }')
+          FILE_PATH="${FILE_PATHS[0]}"
+          FILE_NAME=$(basename "$FILE_PATH")
+          FILE_HASH=$(sha256sum "$FILE_PATH" | awk '{ print $1 }')
           echo "path=$FILE_PATH" >> $GITHUB_OUTPUT
           echo "name=$FILE_NAME" >> $GITHUB_OUTPUT
           echo "hash=$FILE_HASH" >> $GITHUB_OUTPUT
@@ -221,38 +219,29 @@ jobs:
 
             Build Information
 
-            - File name: `${{ steps.file_info.outputs.name }}`
-            - SHA-256: `${{ steps.file_info.outputs.hash }}`
+            - File name: \`${{ steps.file_info.outputs.name }}\`
+            - SHA-256: \`${{ steps.file_info.outputs.hash }}\`
             - Built from: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Publish Minecraft Mods
         uses: Kira-NT/mc-publish@v3.3
         with:
-          # https://modrinth.com/settings/pats
           modrinth-id: pWSdI9vn
           modrinth-token: ${{ secrets.MODRINTH_API_TOKEN }}
-
-          # https://legacy.curseforge.com/account/api-tokens
           curseforge-id: 1566301
           curseforge-token: ${{ secrets.CURSEFORGE_API_TOKEN }}
-
           github-tag: ${{ steps.release_info.outputs.tag_name }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
           files: ${{ steps.file_info.outputs.path }}
-
           name: ${{ format('{0} v{1} for mc{2}', steps.properties_g.outputs.mod_name, steps.properties_repo.outputs.mod_version, steps.properties_v.outputs.minecraft_version) }}
           version: ${{ format('v{1}-mc{0}', steps.properties_v.outputs.minecraft_version, steps.properties_repo.outputs.mod_version) }}
           version-type: release
-
           loaders: fabric
           game-versions: ${{ steps.properties_v.outputs.game_versions }}
           game-version-filter: any
-          dependencies: ''  # declare the dependencies explicitly, so mc-publish won't try to load from fabric.mod.json
-
+          dependencies: ''
           github-changelog: ${{ steps.get_release.outputs.body }}
           modrinth-changelog: ${{ steps.changelog.outputs.result }}
           curseforge-changelog: ${{ steps.changelog.outputs.result }}
-
           retry-attempts: 3
           retry-delay: 10000
