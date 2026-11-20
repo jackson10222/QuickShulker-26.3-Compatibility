@@ -1,0 +1,23 @@
+{
+  "required": true,
+  "package": "net.kyrptonaught.quickshulker.mixin",
+  "compatibilityLevel": "${compatibility_level}",
+  "mixins": [
+    "minecraft.ContainerMixin",
+    "minecraft.ContainerOpenMixin",
+    "minecraft.CraftingScreenHandlerMixin",
+    "minecraft.AbstractCraftingMenuAccessor",
+    "minecraft.AbstractContainerMenuMixin",
+    "minecraft.AnvilMenuAccessor",
+    "minecraft.ItemMixin"
+  ],
+  "client": [
+    "minecraft.AbstractContainerScreenInvoker",
+    "minecraft.AbstractContainerScreenMixin",
+    "minecraft.CreativeSlotMixin",
+    "minecraft.ScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

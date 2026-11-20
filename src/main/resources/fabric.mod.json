@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${mod_version}",
+  "name": "${mod_name}",
+  "description": "Quickly open Shulker boxes and more",
+  "authors": [
+    "kyrptonaught"
+  ],
+  "contributors": [
+    "Hao_cen",
+    "Grayer0113",
+    "MoRanpcy",
+    "EnderPhantomWing"
+  ],
+  "contact": {
+    "homepage": "${mod_homepage}",
+    "sources": "${mod_homepage}",
+    "issues": "${mod_homepage}/issues"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.a": "https://modrinth.com/mod/quickshulker",
+        "modmenu.b": "https://github.com/kyrptonaught/quickshulker",
+        "modmenu.c": "https://github.com/Haocen2004/quickshulker",
+        "modmenu.d": "https://github.com/MoRanpcy/quickshulker"
+      }
+    }
+  },
+  "license": "${mod_license}",
+  "icon": "assets/quickshulker/icon.png",
+  "environment": "*",
+  "mixins": [
+    {
+      "config": "quickshulker.mixins.json",
+      "environment": "*"
+    },
+    {
+      "config": "quickshulker-compat.mixins.json",
+      "environment": "*"
+    },
+    {
+      "config": "shulkerutils.mixins.json",
+      "environment": "client"
+    },
+    {
+      "config": "kyrptconfig.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "entrypoints": {
+    "main": [
+      "net.kyrptonaught.quickshulker.QuickShulkerMod"
+    ],
+    "quickshulker": [
+      "net.kyrptonaught.quickshulker.QuickShulkerMod"
+    ],
+    "client": [
+      "net.kyrptonaught.quickshulker.client.QuickShulkerModClient"
+    ],
+    "modmenu": [
+      "net.kyrptonaught.quickshulker.compat.modmenu.ModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "minecraft": "${minecraft_dependency}",
+    "fabric-api": "*",
+    "java": ">=21"
+  },
+  "accessWidener": "quickshulker.accesswidener"
+}

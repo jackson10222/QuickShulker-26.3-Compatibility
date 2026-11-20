@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "net.kyrptonaught.quickshulker.mixin.compat",
+  "plugin": "net.kyrptonaught.quickshulker.mixin.plugin.ModsMixinConfigPlugin",
+  "compatibilityLevel": "${compatibility_level}",
+  "mixins": [
+    "reinfshulker.ReinforcingMaterialSettingsMixin",
+    "reinfshulker.ReinforcedShulkerBoxBlockMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

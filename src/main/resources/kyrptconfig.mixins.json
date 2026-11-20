@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "net.kyrptonaught.kyrptconfig.mixin.displaykeybind",
+  "compatibilityLevel": "${compatibility_level}",
+  "client": [
+    "GameOptionsVisitorMixin",
+    "OptionsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
