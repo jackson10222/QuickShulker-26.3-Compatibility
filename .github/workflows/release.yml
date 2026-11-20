@@ -26,6 +26,9 @@ on:
         type: string
         required: true
 
+permissions:
+  contents: write
+
 env:
   BUILD_TYPE: release
 
@@ -104,7 +107,7 @@ jobs:
     with:
       build_type: release
       download_dependencies: true
-      publish: true
+      publish: false
       target_subproject: ${{ github.event.inputs.target_subproject }}
 
   release:
